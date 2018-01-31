@@ -3,6 +3,7 @@ const http = require('http')
 const express = require('express')
 const socketIO = require('socket.io')
 
+const {generateMessage} = require('./utils/message')
 const publicPath = path.join(__dirname, '../public')
 // for heroku
 const port = process.env.PORT || 3000
@@ -19,10 +20,10 @@ io.on('connection', (socket) => {
 	console.log('New user connected')
 
 	// emit message to the user who comes from Admin welcome to the chat app
-	socket.emit('welcomeMessage', 'Welcome to the chat app')
+	socket.emit('welcomeMessage', generateMessage('Admin', 'Welcome to the chat app'))
 
 	// socket.broadcast.emit from Admin text new user joined greeting us
-	socket.broadcast.emit('welcomeMessage', 'New user has joined')
+	socket.broadcast.emit('welcomeMessage', generateMessage('Admin', 'New User has joined'))
 
 	// created event
 	socket.emit('newEmail', {
@@ -32,11 +33,7 @@ io.on('connection', (socket) => {
 	})
 	
 	socket.on('createMessage', (message) => {
-		io.emit('newMessage', {
-			from:message.from,
-			text: message.text,
-			createdAt: new Date().getTime()
-		})
+		io.emit('newMessage', generateMessage(message.from, message.text))
 
 		// // BROADCASTING: emitting an event to everybody except one
 		// socket.broadcast.emit('newMessage', {
