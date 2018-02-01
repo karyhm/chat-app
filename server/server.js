@@ -34,7 +34,7 @@ io.on('connection', (socket) => {
 	
 	socket.on('createMessage', (message, callback) => {
 		io.emit('newMessage', generateMessage(message.from, message.text))
-		callback('This is from the server. The callback')
+		callback()
 
 		// // BROADCASTING: emitting an event to everybody except one
 		// socket.broadcast.emit('newMessage', {
