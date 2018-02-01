@@ -3,7 +3,7 @@ const http = require('http')
 const express = require('express')
 const socketIO = require('socket.io')
 
-const {generateMessage} = require('./utils/message')
+const {generateMessage, generateLocationMessage} = require('./utils/message')
 const publicPath = path.join(__dirname, '../public')
 // for heroku
 const port = process.env.PORT || 3000
@@ -32,8 +32,9 @@ io.on('connection', (socket) => {
 		createdAt: 'Jan 29th 2018'
 	})
 	
-	socket.on('createMessage', (message) => {
+	socket.on('createMessage', (message, callback) => {
 		io.emit('newMessage', generateMessage(message.from, message.text))
+		callback('This is from the server. The callback')
 
 		// // BROADCASTING: emitting an event to everybody except one
 		// socket.broadcast.emit('newMessage', {
@@ -43,6 +44,10 @@ io.on('connection', (socket) => {
 		// })
 
 		console.log('createMessage', message)
+	})
+
+	socket.on('createLocationMessage', (coords) => {
+		io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longuitude))
 	})
 
 	socket.on('createEmail', (newEmail) => {
