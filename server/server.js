@@ -4,6 +4,7 @@ const express = require('express')
 const socketIO = require('socket.io')
 
 const {generateMessage, generateLocationMessage} = require('./utils/message')
+const {isRealString} = require('./utils/validation')
 const publicPath = path.join(__dirname, '../public')
 // for heroku
 const port = process.env.PORT || 3000
@@ -19,20 +20,26 @@ app.use(express.static(publicPath))
 io.on('connection', (socket) => {
 	console.log('New user connected')
 
-	// emit message to the user who comes from Admin welcome to the chat app
-	socket.emit('welcomeMessage', generateMessage('Admin', 'Welcome to the chat app'))
 
-	// socket.broadcast.emit from Admin text new user joined greeting us
-	socket.broadcast.emit('welcomeMessage', generateMessage('Admin', 'New User has joined'))
+	socket.on('join', (params, callback) => {
+		if (!isRealString(params.name) || !isRealString(params.room)) {
+			callback('Name and room name are required')	
+		}
+		socket.join(params.room)
+		// socket.leave(params.room) <- use this to leave the room
+		// socket.broadcast.emit -> socket.broadcast.to(roomname).emit
+		// socket.emit
 
-	// created event
-	socket.emit('newEmail', {
-		from: 'Kary',
-		text: 'Hi',
-		createdAt: 'Jan 29th 2018'
+		// emit message to the user who comes from Admin welcome to the chat app
+		socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'))
+
+		// socket.broadcast.emit from Admin text new user joined greeting us
+		socket.broadcast.to(params.room).emit('newMessage', generateMessage('Admin', `${params.room} has joined`))
+		callback()
 	})
-	
+
 	socket.on('createMessage', (message, callback) => {
+		console.log('createMessage', message)
 		io.emit('newMessage', generateMessage(message.from, message.text))
 		callback()
 
@@ -43,15 +50,10 @@ io.on('connection', (socket) => {
 		// 	createdAt: new Date().getTime()
 		// })
 
-		console.log('createMessage', message)
 	})
 
 	socket.on('createLocationMessage', (coords) => {
 		io.emit('newLocationMessage', generateLocationMessage('Admin', coords.latitude, coords.longuitude))
-	})
-
-	socket.on('createEmail', (newEmail) => {
-		console.log('createEmail', newEmail)
 	})
 
 	socket.on('disconnect', () => {
